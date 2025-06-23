@@ -56,7 +56,11 @@ A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movemen
 
 ![The image here shows the functions under the DECK section of MIDI settings in rekordbox. To edit the MIDI IN and MIDI OUT, double click on the box, type in your corresponding value, and press ENTER.](images/MIDISetup1.png)
 
+The image here shows the functions under the DECK section of MIDI settings in rekordbox. To edit the MIDI IN and MIDI OUT, double click on the box, type in your corresponding value, and press ENTER.
+
 ![The image here shows the functions under the MIXER section of MIDI settings in rekordbox. To edit the MIDI IN and MIDI OUT, double click on the box, type in your corresponding value, and press ENTER.](images/MIDISetup2.png)
+
+The image here shows the functions under the MIXER section of MIDI settings in rekordbox. To edit the MIDI IN and MIDI OUT, double click on the box, type in your corresponding value, and press ENTER.
 
 ## Usage
 
