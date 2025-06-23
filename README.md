@@ -2,7 +2,7 @@
 
 A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movements and control DJ software. This project leverages Python with OpenCV for video processing and MediaPipe for hand tracking.
 
-## Features
+## Features (for now)
 
 - **Dual Deck Control:** Control two DJ decks independently using your left and right hands.
 - **Play/Pause Toggle:** Start and stop tracks with a simple gesture.
@@ -31,7 +31,7 @@ A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movemen
 
     ```bash
     git clone https://github.com/JustinTjitra/mini-dj.git
-    cd dj-hand-controller
+    cd mini-dj
     ```
 
 2.  **Create and activate a virtual environment:**
@@ -51,6 +51,12 @@ A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movemen
     ```bash
     pip install -r requirements.txt
     ```
+
+## Example MIDI Setup
+
+![The image here shows the functions under the DECK section of MIDI settings in rekordbox. To edit the MIDI IN and MIDI OUT, double click on the box, type in your corresponding value, and press ENTER.](images/MIDISetup1.png)
+
+![The image here shows the functions under the MIXER section of MIDI settings in rekordbox. To edit the MIDI IN and MIDI OUT, double click on the box, type in your corresponding value, and press ENTER.](images/MIDISetup2.png)
 
 ## Usage
 

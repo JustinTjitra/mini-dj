@@ -9,3 +9,4 @@ opencv-python==4.11.0.86
 mediapipe==0.10.9
 mido==1.3.2
 numpy==1.26.4
+python-rtmidi==1.5.8
