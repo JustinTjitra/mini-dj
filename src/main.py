@@ -38,7 +38,7 @@ BEAT_SYNC_DEBOUNCE_TIME = 0
 
 # ——— Default-zone settings ———
 # Default zones are small squares of size 25% of the smaller screen dimension
-ZONE_SIZE_FACTOR  = 0.15    # fraction of min(width,height)
+ZONE_SIZE_FACTOR  = 0.10    # fraction of min(width,height)
 DEFAULT_CC        = 64      # middle CC value
 DEFAULT_VOLUME_WIDTH = 0.1
 
@@ -470,9 +470,9 @@ def handle_beat_sync(label, _, trackers, outport, frame):
     # Draw sync toggle buttons as small circles
     h, w, _ = frame.shape
     circle_radius = 40
-    y_center = 900
-    left_center = (625 + circle_radius, y_center)
-    right_center = (w - 625 - circle_radius, y_center)
+    y_center = 1000
+    left_center = (450 + circle_radius, y_center)
+    right_center = (w - 450 - circle_radius, y_center)
     
     # Draw circles
     overlay = frame.copy()
@@ -655,8 +655,40 @@ def draw_stem_bars(frame, stem_state):
 
 # ——— Main ———
 def main():
-    print("MIDI ports:", mido.get_output_names())
-    out = mido.open_output('IAC Driver Bus 1')
+    # Let user select MIDI port
+    available_ports = mido.get_output_names()
+    if not available_ports:
+        print("Error: No MIDI output ports found.")
+        print("Please make sure a virtual MIDI driver (like 'IAC Driver' on Mac or 'loopMIDI' on Windows) is installed and running.")
+        return
+
+    print("Please select a MIDI output port:")
+    for i, port_name in enumerate(available_ports):
+        print(f"  {i}: {port_name}")
+
+    selected_port_index = -1
+    while True:
+        try:
+            raw_input = input(f"Enter the number of the port you want to use (0-{len(available_ports)-1}): ")
+            selected_port_index = int(raw_input)
+            if 0 <= selected_port_index < len(available_ports):
+                break
+            else:
+                print(f"Invalid number. Please enter a number between 0 and {len(available_ports)-1}.")
+        except ValueError:
+            print("Invalid input. Please enter a number.")
+        except (KeyboardInterrupt, EOFError):
+            print("\nSelection cancelled. Exiting.")
+            return
+            
+    selected_port_name = available_ports[selected_port_index]
+    print(f"Opening port: {selected_port_name}")
+    
+    try:
+        out = mido.open_output(selected_port_name)
+    except Exception as e:
+        print(f"Error opening MIDI port: {e}")
+        return
 
     hands = mp.solutions.hands.Hands(
         static_image_mode=False,
