@@ -74,6 +74,10 @@ The image here shows the functions under the MIXER section of MIDI settings in r
 
 ## Gesture Guide
 
+IMPORTANT: Gestures are unfinished and are set to change according to their corresponding function.
+Ensure that your hand is not too far from the camera in order for it to read your gestures.
+More features to come... (longer loops, filters, cues, pads, etc.)
+
 ### Palm Facing Camera
 
 | Gesture                         | Action                | Control Mechanism                                    |
