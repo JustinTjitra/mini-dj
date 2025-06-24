@@ -57,6 +57,7 @@ A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movemen
 
 3.  **Install the required libraries:**
     ```bash
+    pip install mediapipe opencv-python
     pip install -r requirements.txt
     ```
 
