@@ -14,7 +14,7 @@ A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movemen
 
 ## Prerequisites
 
-1.  **Python:** This project uses Python 3.8+. You can download it from [python.org](https://www.python.org/downloads/).
+1.  **Python:** This project requires **Python 3.8, 3.9, or 3.10**. **Mediapipe does NOT support Python 3.11 or newer.** You can download compatible versions from [python.org](https://www.python.org/downloads/).
 2.  **Webcam:** A standard webcam is required for hand tracking.
 3.  **Virtual MIDI Driver:** You must have a virtual MIDI driver installed and running to route MIDI signals from this script to your DJ software.
     - **macOS:** The built-in **IAC Driver** is perfect. To enable it:
@@ -34,16 +34,24 @@ A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movemen
     cd mini-dj
     ```
 
-2.  **Create and activate a virtual environment:**
+2.  **Set up a Python 3.10/3.9/3.8 environment**
+
+    > **Note:** Mediapipe only supports Python 3.8, 3.9, or 3.10. If your system default is Python 3.11 or newer, you must install an older version.
 
     - **macOS / Linux:**
       ```bash
-      python3 -m venv venv
+      python3 --version
+      python3.8.16 --version  # or python3.10, python3.9
+      python3.8.16 -m venv venv  # or python3.10, python3.9
       source venv/bin/activate
       ```
     - **Windows:**
-      ```bash
-      python -m venv venv
+      ```powershell
+      py -0
+      # or
+      python --version
+      python3.8.16 --version  # or python3.9, python3.8
+      py -3.8.16 -m venv venv  # or -3.9, -3.8
       .\venv\Scripts\activate
       ```
 
