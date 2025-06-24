@@ -41,8 +41,8 @@ A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movemen
     - **macOS / Linux:**
       ```bash
       python3 --version
-      python3.8.16 --version  # or python3.10, python3.9
-      python3.8.16 -m venv venv  # or python3.10, python3.9
+      python3.8 --version  # or python3.10, python3.9
+      python3.8 -m venv venv  # or python3.10, python3.9
       source venv/bin/activate
       ```
     - **Windows:**
@@ -50,8 +50,8 @@ A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movemen
       py -0
       # or
       python --version
-      python3.8.16 --version  # or python3.9, python3.8
-      py -3.8.16 -m venv venv  # or -3.9, -3.8
+      py -3.8 --version  # or -3.9, -3.10
+      py -3.8 -m venv venv  # or -3.9, -3.10
       .\venv\Scripts\activate
       ```
 
