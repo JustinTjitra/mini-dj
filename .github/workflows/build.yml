@@ -29,11 +29,8 @@ jobs:
 
       - name: Build (Windows onefile)
         if: startsWith(matrix.os, 'windows')
-        run: |
-          pyinstaller src\main.py --onefile --noconsole `
-            --name MiniDJ `
-            --add-data "images/*;images" `
-            --hidden-import mediapipe --hidden-import cv2 --hidden-import rtmidi
+        run: pyinstaller src\main.py --onefile --noconsole --name MiniDJ --add-data "images/*;images" --hidden-import mediapipe --hidden-import cv2 --hidden-import rtmidi
+
 
 
       - uses: actions/upload-artifact@v4
