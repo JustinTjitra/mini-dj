@@ -16,6 +16,7 @@ VOLUME_CC         = 7       # Mixer volume fader
 TEMPO_CC          = 22      # Deck tempo slider
 LOOP_NOTE         = 62      # Loop 1 beat toggle
 LOOP2_NOTE        = 63      # Loop 2 beat toggle
+LOOP4_NOTE        = 65      # Loop 4 beat toggle
 BEAT_SYNC_NOTE    = 64      # Beat sync toggle
 LOW_EQ_CC         = 14      # CC number for low EQ, adjust as needed
 MID_EQ_CC         = 15      # CC number for mid EQ
@@ -31,8 +32,8 @@ DEBOUNCE_FRAMES   = 2
 DEBOUNCE_TIME     = 0
 VOL_THRESHOLD     = 3
 TEMPO_THRESHOLD   = 3
-LOOP_DEBOUNCE_FRAMES = 3
-LOOP_DEBOUNCE_TIME   = 0.05
+LOOP_DEBOUNCE_FRAMES = 5
+LOOP_DEBOUNCE_TIME   = 0.2
 BEAT_SYNC_DEBOUNCE_FRAMES = 1
 BEAT_SYNC_DEBOUNCE_TIME = 0
 
@@ -135,18 +136,33 @@ def is_index_and_middle_up(lm, h):
             return False
     return True
 
-def is_middle_ring_pinky_up(lm, h):
+def is_middle_ring_pinky_up(lm, h, min_dist=0.04):
     # middle, ring, pinky tips above their PIPs, index folded
-    if lm[8].y * h < lm[6].y * h:
+    # Check that index is clearly folded
+    if lm[8].y * h < lm[6].y * h + min_dist * h:
         return False
+    # Check that middle, ring, pinky are clearly up
     for tip,pip in ((12,10),(16,14),(20,18)):
-        if lm[tip].y * h >= lm[pip].y * h:
+        if lm[tip].y * h >= lm[pip].y * h - min_dist * h:
             return False
     return True
+
+def is_ring_pinky_up(lm, h, min_dist=0.04):
+    # ring and pinky tips above their PIPs, index and middle folded
+    # Check that index and middle are clearly folded
+    if lm[8].y * h < lm[6].y * h + min_dist * h or lm[12].y * h < lm[10].y * h + min_dist * h:
+        return False
+    # Check that ring and pinky are clearly up
+    for tip,pip in ((16,14),(20,18)):
+        if lm[tip].y * h >= lm[pip].y * h - min_dist * h:
+            return False
+    return True
+
 
 # Add a helper to update the gesture message
 def set_gesture_msg(msg):
     CURRENT_GESTURE_MSG['msg'] = msg
+
 
 def get_eq_zones(label, w, h):
     zone_size = int(min(w, h) * ZONE_SIZE_FACTOR)
@@ -209,8 +225,8 @@ def handle_volume(label, open_flag, lm, vs, outport, frame):
     else:
         bar_x = w - 50 - bar_w
     x = lm[0].x * w if open_flag else None
-    bar_color = (0, 0, 0)  # Solid black
-    cv2.rectangle(frame, (bar_x, 500), (bar_x+bar_w, h), bar_color, -1)
+    # Transparent volume bar with colored border
+    cv2.rectangle(frame, (bar_x, 500), (bar_x+bar_w, h), (0, 200, 255), 3)
     # Draw current indicator for both bars
     for side, color in zip(['Left', 'Right'], [(0,255,0), (255,0,0)]):
         last = vs['last'][side]
@@ -223,19 +239,22 @@ def handle_volume(label, open_flag, lm, vs, outport, frame):
             else:
                 x1, x2 = w-50-bar_w, w-50
             y_pos = int(bottom - (last / 127) * (bottom - top))
-            cv2.rectangle(frame, (x1, y_pos-2), (x2, y_pos+2), (255,255,255,128), -1)
-    # Draw GAIN text
+            cv2.rectangle(frame, (x1, y_pos-2), (x2, y_pos+2), (0,0,0), -1)
+    # Draw modern GAIN text with background
     font = FONT_FACE
-    font_scale = 1.0
+    font_scale = 1.2
     thickness = 1
     text = 'GAIN'
     text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
-    while text_size[0] > bar_w - 10 and font_scale > 0.3:
+    while text_size[0] > bar_w - 20 and font_scale > 0.3:
         font_scale -= 0.05
         text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
     text_x = bar_x + (bar_w - text_size[0]) // 2
-    text_y = 495
-    cv2.putText(frame, text, (text_x, text_y), font, font_scale, FONT_COLOR, thickness, cv2.LINE_AA)
+    text_y = 490
+    
+    # Simple text with shadow
+    cv2.putText(frame, text, (text_x+1, text_y+1), font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(frame, text, (text_x, text_y), font, font_scale, (0, 200, 255), thickness, cv2.LINE_AA)
     if not open_flag:
         return
     if label == 'Left' and (x<50 or x > bar_w+50):
@@ -268,8 +287,8 @@ def handle_tempo(label, closed_flag, lm, ts, outport, frame):
     else:
         bar_x = w - 250 - bar_w
     x = lm[0].x * w if closed_flag else None
-    bar_color = (0, 0, 0)  # Solid black
-    cv2.rectangle(frame, (bar_x, 500), (bar_x+bar_w, h), bar_color, -1)
+    # Transparent tempo bar with colored border
+    cv2.rectangle(frame, (bar_x, 500), (bar_x+bar_w, h), (255, 100, 0), 3)
     # Draw current indicator for both bars
     for side, color in zip(['Left', 'Right'], [(0,255,0), (255,0,0)]):
         last = ts['last'][side]
@@ -282,19 +301,22 @@ def handle_tempo(label, closed_flag, lm, ts, outport, frame):
             else:
                 x1, x2 = w-250-bar_w, w-250
             y_pos = int(bottom - (last / 127) * (bottom - top))
-            cv2.rectangle(frame, (x1, y_pos-2), (x2, y_pos+2), (255,255,255,128), -1)
-    # Draw TEMPO text
+            cv2.rectangle(frame, (x1, y_pos-2), (x2, y_pos+2), (0,0,0), -1)
+    # Draw modern TEMPO text with background
     font = FONT_FACE
-    font_scale = 1.0
+    font_scale = 1.2
     thickness = 1
     text = 'TEMPO'
     text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
-    while text_size[0] > bar_w - 10 and font_scale > 0.3:
+    while text_size[0] > bar_w - 20 and font_scale > 0.3:
         font_scale -= 0.05
         text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
     text_x = bar_x + (bar_w - text_size[0]) // 2
-    text_y = 495
-    cv2.putText(frame, text, (text_x, text_y), font, font_scale, FONT_COLOR, thickness, cv2.LINE_AA)
+    text_y = 490
+    
+    # Simple text with shadow
+    cv2.putText(frame, text, (text_x+1, text_y+1), font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
+    cv2.putText(frame, text, (text_x, text_y), font, font_scale, (255, 100, 0), thickness, cv2.LINE_AA)
     if not closed_flag:
         return
     if label == 'Left' and (x<250 or x > bar_w+250):
@@ -326,13 +348,15 @@ def handle_eq(label, open_flag, lm, outport, frame, eq_state, gestures, palm_for
     mode_zone = zones['mode']
     zone_size = int(min(w, h) * ZONE_SIZE_FACTOR)
     
-    # Draw UI
-    inc_color = (0, 0, 0)
-    dec_color = (0, 0, 0)
-    mode_color = (0, 0, 0)
-    cv2.rectangle(frame, (inc_zone[0], inc_zone[1]), (inc_zone[2], inc_zone[3]), inc_color, -1)
-    cv2.rectangle(frame, (dec_zone[0], dec_zone[1]), (dec_zone[2], dec_zone[3]), dec_color, -1)
-    cv2.rectangle(frame, (mode_zone[0], mode_zone[1]), (mode_zone[2], mode_zone[3]), mode_color, -1)
+    # Draw transparent EQ zones with colored borders
+    # INC zone
+    cv2.rectangle(frame, (inc_zone[0], inc_zone[1]), (inc_zone[2], inc_zone[3]), (0, 200, 255), 2)
+    
+    # DEC zone
+    cv2.rectangle(frame, (dec_zone[0], dec_zone[1]), (dec_zone[2], dec_zone[3]), (255, 100, 0), 2)
+    
+    # MODE zone
+    cv2.rectangle(frame, (mode_zone[0], mode_zone[1]), (mode_zone[2], mode_zone[3]), (255, 0, 255), 2)
     
     # Draw text
     font = FONT_FACE
@@ -368,10 +392,12 @@ def handle_eq(label, open_flag, lm, outport, frame, eq_state, gestures, palm_for
     
     if in_mode and palm_forward:
         active_gesture = None
-        if gestures['two_beat_loop']:
+        if gestures['four_beat_loop']:
             active_gesture = 'high'
-        elif gestures['one_beat_loop']:
+        elif gestures['two_beat_loop']:
             active_gesture = 'mid'
+        elif gestures['one_beat_loop']:
+            active_gesture = 'low'
         elif gestures['index_up']:
             active_gesture = 'low'
         
@@ -448,10 +474,18 @@ def handle_loop2(label, gesture, trackers, outport, lm, frame):
     # Only trigger for the two_beat_loop gesture (True/False)
     if not gesture:
         trackers['last_gesture'][label] = None
+        trackers['last_time'][label] = 0
         return
+    
+    # Add debouncing with time delay
+    current_time = time.time()
+    if current_time - trackers.get('last_time', {}).get(label, 0) < LOOP_DEBOUNCE_TIME:
+        return
+    
     # Toggle logic: only trigger on rising edge
     if trackers['last_gesture'][label] != gesture:
         trackers['last_gesture'][label] = gesture
+        trackers['last_time'][label] = current_time
         # Toggle state
         state = trackers['state'][label]
         trackers['state'][label] = not state
@@ -460,6 +494,42 @@ def handle_loop2(label, gesture, trackers, outport, lm, frame):
                                   note=LOOP2_NOTE, velocity=127))
         print(f"{label} 2-beat loop {'ON' if not state else 'OFF'} (ch{ch})")
         set_gesture_msg(f"{label} 2-beat loop {'ON' if not state else 'OFF'} (ch{ch})")
+
+def handle_loop4(label, gesture, trackers, outport, lm, frame):
+    if lm and frame is not None:
+        h, w, _ = frame.shape
+        zones = get_eq_zones(label, w, h)
+        mode_zone = zones['mode']
+        x = lm[0].x * w
+        y = lm[0].y * h
+        in_mode = (mode_zone[0] <= x <= mode_zone[2] and mode_zone[1] <= y <= mode_zone[3])
+        if in_mode:
+            return
+            
+    # Only trigger for the four_beat_loop gesture (True/False)
+    if not gesture:
+        trackers['last_gesture'][label] = None
+        trackers['last_time'][label] = 0
+        return
+    
+    # Add debouncing with time delay
+    current_time = time.time()
+    if current_time - trackers.get('last_time', {}).get(label, 0) < LOOP_DEBOUNCE_TIME:
+        return
+    
+    # Toggle logic: only trigger on rising edge
+    if trackers['last_gesture'][label] != gesture:
+        trackers['last_gesture'][label] = gesture
+        trackers['last_time'][label] = current_time
+        # Toggle state
+        state = trackers['state'][label]
+        trackers['state'][label] = not state
+        ch = 0 if label == 'Left' else 1
+        outport.send(mido.Message('note_on', channel=ch,
+                                  note=LOOP4_NOTE, velocity=127))
+        print(f"{label} 4-beat loop {'ON' if not state else 'OFF'} (ch{ch})")
+        set_gesture_msg(f"{label} 4-beat loop {'ON' if not state else 'OFF'} (ch{ch})")
+
 
 def handle_beat_sync(label, _, trackers, outport, frame):
     last_time, sync_order, active, prev_in_button = (
@@ -474,25 +544,30 @@ def handle_beat_sync(label, _, trackers, outport, frame):
     left_center = (450 + circle_radius, y_center)
     right_center = (w - 450 - circle_radius, y_center)
     
-    # Draw circles
+    # Draw modern circular buttons
     overlay = frame.copy()
     # Colors
-    edge_color = (0, 180, 255)  # Orangish yellow (BGR)
-    fill_color = (0, 0, 0)      # Black
+    edge_color = (0, 200, 255)  # Cyan
+    fill_color = (20, 20, 20)  # Dark background
     alpha_on = 0.9
-    alpha_off = 0.2
+    alpha_off = 0.3
     font = FONT_FACE
-    font_scale = 0.45
-    thickness = 1
+    font_scale = 0.5
+    thickness = 2
     text_color = FONT_COLOR
+    
     # For left button
     if not active['Left']:
+        # Active state - bright
         cv2.circle(overlay, left_center, circle_radius, fill_color, -1)
-        cv2.circle(overlay, left_center, circle_radius, edge_color, 3)
+        cv2.circle(overlay, left_center, circle_radius, edge_color, 4)
+        # Glow effect
+        cv2.circle(overlay, left_center, circle_radius-2, edge_color, 2)
         cv2.addWeighted(overlay, alpha_on, frame, 1-alpha_on, 0, frame)
     else:
+        # Inactive state - dim
         cv2.circle(overlay, left_center, circle_radius, fill_color, -1)
-        cv2.circle(overlay, left_center, circle_radius, edge_color, 3)
+        cv2.circle(overlay, left_center, circle_radius, (100, 100, 100), 2)
         cv2.addWeighted(overlay, alpha_off, frame, 1-alpha_off, 0, frame)
     # Draw 'BEAT' and 'SYNC' on separate lines, centered
     beat_text = 'BEAT'
@@ -507,12 +582,16 @@ def handle_beat_sync(label, _, trackers, outport, frame):
     # For right button
     overlay = frame.copy()
     if not active['Right']:
+        # Active state - bright
         cv2.circle(overlay, right_center, circle_radius, fill_color, -1)
-        cv2.circle(overlay, right_center, circle_radius, edge_color, 3)
+        cv2.circle(overlay, right_center, circle_radius, edge_color, 4)
+        # Glow effect
+        cv2.circle(overlay, right_center, circle_radius-2, edge_color, 2)
         cv2.addWeighted(overlay, alpha_on, frame, 1-alpha_on, 0, frame)
     else:
+        # Inactive state - dim
         cv2.circle(overlay, right_center, circle_radius, fill_color, -1)
-        cv2.circle(overlay, right_center, circle_radius, edge_color, 3)
+        cv2.circle(overlay, right_center, circle_radius, (100, 100, 100), 2)
         cv2.addWeighted(overlay, alpha_off, frame, 1-alpha_off, 0, frame)
     beat_size = cv2.getTextSize(beat_text, font, font_scale, thickness)[0]
     sync_size = cv2.getTextSize(sync_text, font, font_scale, thickness)[0]
@@ -606,51 +685,153 @@ def handle_stem_toggles(label, lm, h, trackers, outport):
 
 def draw_stem_bars(frame, stem_state):
     h, w, _ = frame.shape
-    bar_height = 18
-    bar_width = 80
-    gap = 10
+    bar_height = 25
+    bar_width = 90
+    gap = 12
     top_margin = 20
-    left_margin = 60
-    right_margin = 60
-    colors = [(255,0,0), (0,255,0), (0,0,255)]  # Blue, Green, Red
-    labels = ['Drums', 'Vocals', 'Inst']
+    left_margin = 50
+    right_margin = 50
+    colors = [(0, 100, 255), (0, 255, 100), (255, 100, 0)]  # Blue, Green, Orange
+    labels = ['DRUMS', 'VOCALS', 'INST']
+    
     # Left deck
     for i, (stem, color, label) in enumerate(zip(['drums','vocals','inst'], colors, labels)):
         x1 = left_margin + i*(bar_width+gap)
         y1 = top_margin
         x2 = x1 + bar_width
         y2 = y1 + bar_height
-        overlay = frame.copy()
-        alpha = 0.9 if not stem_state['Left'][stem] else 0.2
-        cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
-        cv2.addWeighted(overlay, alpha, frame, 1-alpha, 0, frame)
-        # Text
+        
+        # Create transparent rectangle with colored fill when active
+        is_active = not stem_state['Left'][stem]
+        
+        if is_active:
+            # Fill with color when active
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+            cv2.addWeighted(overlay, 0.7, frame, 0.3, 0, frame)
+        else:
+            # Transparent when inactive - just draw border
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (100, 100, 100), 2)
+        
+        # Text with shadow effect
         font = FONT_FACE
-        font_scale = 0.5
-        thickness = 1 if not stem_state['Left'][stem] else 1
-        text_color = (255,255,255) if not stem_state['Left'][stem] else (200,200,200)
+        font_scale = 0.6
+        thickness = 1
+        text_color = (255, 255, 255) if is_active else (150, 150, 150)
+        
+        # Shadow
         text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
         text_x = x1 + (bar_width - text_size[0]) // 2
         text_y = y1 + (bar_height + text_size[1]) // 2
+        cv2.putText(frame, label, (text_x+1, text_y+1), font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
         cv2.putText(frame, label, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+    
     # Right deck
     for i, (stem, color, label) in enumerate(zip(['drums','vocals','inst'], colors, labels)):
         x1 = w - right_margin - (3-i)*(bar_width+gap)
         y1 = top_margin
         x2 = x1 + bar_width
         y2 = y1 + bar_height
-        overlay = frame.copy()
-        alpha = 0.9 if not stem_state['Right'][stem] else 0.2
-        cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
-        cv2.addWeighted(overlay, alpha, frame, 1-alpha, 0, frame)
-        # Text
+        
+        # Create transparent rectangle with colored fill when active
+        is_active = not stem_state['Right'][stem]
+        
+        if is_active:
+            # Fill with color when active
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+            cv2.addWeighted(overlay, 0.7, frame, 0.3, 0, frame)
+        else:
+            # Transparent when inactive - just draw border
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (100, 100, 100), 2)
+        
+        # Text with shadow effect
         font = FONT_FACE
-        font_scale = 0.5
-        thickness = 1 if not stem_state['Right'][stem] else 1
-        text_color = (255,255,255) if not stem_state['Right'][stem] else (200,200,200)
+        font_scale = 0.6
+        thickness = 1
+        text_color = (255, 255, 255) if is_active else (150, 150, 150)
+        
+        # Shadow
         text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
         text_x = x1 + (bar_width - text_size[0]) // 2
         text_y = y1 + (bar_height + text_size[1]) // 2
+        cv2.putText(frame, label, (text_x+1, text_y+1), font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
+        cv2.putText(frame, label, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+
+def draw_loop_indicators(frame, loop_states):
+    h, w, _ = frame.shape
+    bar_height = 30
+    bar_width = 70
+    gap = 15
+    top_margin = 60
+    left_margin = 50
+    right_margin = 50
+    colors = [(0, 200, 255), (255, 200, 0), (0, 255, 100)]  # Cyan, Yellow, Green
+    labels = ['1B', '2B', '4B']
+    loop_keys = ['loop1', 'loop2', 'loop4']
+    
+    # Left deck
+    for i, (loop_key, color, label) in enumerate(zip(loop_keys, colors, labels)):
+        x1 = left_margin + i*(bar_width+gap)
+        y1 = top_margin
+        x2 = x1 + bar_width
+        y2 = y1 + bar_height
+        
+        is_active = loop_states['Left'][loop_key]
+        
+        if is_active:
+            # Fill with color when active
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+            cv2.addWeighted(overlay, 0.8, frame, 0.2, 0, frame)
+        else:
+            # Transparent when inactive - just draw border
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (80, 80, 80), 2)
+        
+        # Text with shadow
+        font = FONT_FACE
+        font_scale = 0.7
+        thickness = 1
+        text_color = (255, 255, 255) if is_active else (120, 120, 120)
+        
+        text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
+        text_x = x1 + (bar_width - text_size[0]) // 2
+        text_y = y1 + (bar_height + text_size[1]) // 2
+        
+        # Shadow
+        cv2.putText(frame, label, (text_x+1, text_y+1), font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
+        cv2.putText(frame, label, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
+    
+    # Right deck
+    for i, (loop_key, color, label) in enumerate(zip(loop_keys, colors, labels)):
+        x1 = w - right_margin - (3-i)*(bar_width+gap)
+        y1 = top_margin
+        x2 = x1 + bar_width
+        y2 = y1 + bar_height
+        
+        is_active = loop_states['Right'][loop_key]
+        
+        if is_active:
+            # Fill with color when active
+            overlay = frame.copy()
+            cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+            cv2.addWeighted(overlay, 0.8, frame, 0.2, 0, frame)
+        else:
+            # Transparent when inactive - just draw border
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (80, 80, 80), 2)
+        
+        # Text with shadow
+        font = FONT_FACE
+        font_scale = 0.7
+        thickness = 1
+        text_color = (255, 255, 255) if is_active else (120, 120, 120)
+        
+        text_size = cv2.getTextSize(label, font, font_scale, thickness)[0]
+        text_x = x1 + (bar_width - text_size[0]) // 2
+        text_y = y1 + (bar_height + text_size[1]) // 2
+        
+        # Shadow
+        cv2.putText(frame, label, (text_x+1, text_y+1), font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
         cv2.putText(frame, label, (text_x, text_y), font, font_scale, text_color, thickness, cv2.LINE_AA)
 
 # ——— Main ———
@@ -715,6 +896,12 @@ def main():
     }
     loop2_st = {
         'last_gesture': {'Left': None, 'Right': None},
+        'last_time': {'Left': 0, 'Right': 0},
+        'state': {'Left': False, 'Right': False}
+    }
+    loop4_st = {
+        'last_gesture': {'Left': None, 'Right': None},
+        'last_time': {'Left': 0, 'Right': 0},
         'state': {'Left': False, 'Right': False}
     }
     beat_sync_st = {
@@ -733,6 +920,16 @@ def main():
             'Right': {'drums': False, 'vocals': False, 'inst': False}
         }
     }
+    
+    # Combined loop states for visual feedback
+    loop_states = {
+        'Left': {
+            'loop1': False, 'loop2': False, 'loop4': False
+        },
+        'Right': {
+            'loop1': False, 'loop2': False, 'loop4': False
+        }
+    }
 
     vol = {'last':{'Left':64,'Right':64}, 'threshold':VOL_THRESHOLD}
     tmp = {'last':{'Left':64,'Right':64}, 'threshold':TEMPO_THRESHOLD}
@@ -748,11 +945,14 @@ def main():
         ret, frame = cap.read()
         if not ret:
             break
+        # Mirror the camera feed
+        frame = cv2.flip(frame, 1)
         h, w, _ = frame.shape
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         res = hands.process(rgb)
         
         draw_stem_bars(frame, stem_trackers['state'])
+        draw_loop_indicators(frame, loop_states)
 
         if res.multi_hand_landmarks:
             for lm, hd in zip(res.multi_hand_landmarks, res.multi_handedness):
@@ -765,11 +965,13 @@ def main():
                 idx_up = is_index_up(lm.landmark,h)
                 one_beat_loop = is_index_and_middle_up(lm.landmark, h)
                 two_beat_loop = is_middle_ring_pinky_up(lm.landmark, h)
+                four_beat_loop = is_ring_pinky_up(lm.landmark, h)
                 
                 eq_gestures = {
                     'index_up': idx_up,
                     'one_beat_loop': one_beat_loop,
-                    'two_beat_loop': two_beat_loop
+                    'two_beat_loop': two_beat_loop,
+                    'four_beat_loop': four_beat_loop
                 }
 
                 # Store current hand position for beat sync
@@ -785,6 +987,12 @@ def main():
                 if palm_forward:
                     handle_loop(label, one_beat_loop, loop_st, out, lm.landmark, frame)
                     handle_loop2(label, two_beat_loop, loop2_st, out, lm.landmark, frame)
+                    handle_loop4(label, four_beat_loop, loop4_st, out, lm.landmark, frame)
+                    
+                    # Update visual feedback states
+                    loop_states[label]['loop1'] = loop_st['state'][label]
+                    loop_states[label]['loop2'] = loop2_st['state'][label]
+                    loop_states[label]['loop4'] = loop4_st['state'][label]
 
                 handle_beat_sync(label, None, beat_sync_st, out, frame)
                 handle_stem_toggles(label, lm.landmark, h, stem_trackers, out)
@@ -794,17 +1002,31 @@ def main():
                     
                 mp.solutions.drawing_utils.draw_landmarks(frame, lm, mp.solutions.hands.HAND_CONNECTIONS)
 
-        # Draw the current gesture message at the top/middle
+        # Draw the current gesture message with modern styling
         if CURRENT_GESTURE_MSG['msg']:
             font = FONT_FACE
-            font_scale = 1.1
-            thickness = 2
+            font_scale = 1.2
+            thickness = 1
             text = CURRENT_GESTURE_MSG['msg']
             h, w, _ = frame.shape
             text_size = cv2.getTextSize(text, font, font_scale, thickness)[0]
             text_x = (w - text_size[0]) // 2
-            text_y = 60
-            cv2.putText(frame, text, (text_x, text_y), font, font_scale, (255,255,0), thickness, cv2.LINE_AA)
+            text_y = 150
+            
+            # Background rectangle with rounded corners effect
+            padding = 15
+            bg_x1 = text_x - padding
+            bg_y1 = text_y - text_size[1] - padding
+            bg_x2 = text_x + text_size[0] + padding
+            bg_y2 = text_y + padding
+            
+            # Draw simple background
+            cv2.rectangle(frame, (bg_x1, bg_y1), (bg_x2, bg_y2), (20, 20, 20), -1)
+            cv2.rectangle(frame, (bg_x1, bg_y1), (bg_x2, bg_y2), (0, 200, 255), 3)
+            
+            # Draw text with shadow
+            cv2.putText(frame, text, (text_x+2, text_y+2), font, font_scale, (0, 0, 0), thickness, cv2.LINE_AA)
+            cv2.putText(frame, text, (text_x, text_y), font, font_scale, (255, 255, 255), thickness, cv2.LINE_AA)
 
         cv2.imshow("DJ Controller", frame)
         if cv2.waitKey(1) & 0xFF == 27:
