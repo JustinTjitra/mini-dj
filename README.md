@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+[![Watch the demo](https://img.youtube.com/vi/HVagoIxUzM0/maxresdefault.jpg)](https://youtu.be/HVagoIxUzM0)
 
 # DJ Hand Controller
 
@@ -115,39 +115,3 @@ _Note: When an EQ mode (Low, Mid, or High) is selected, place your wrist in the 
 | **Middle, Ring, Pinky Up**    | Toggle Instrumentals Mute | Rising edge of gesture |
 
 ---
-
-=======
-
-# mini-dj
-
-## Demo Video
-
-[![Watch the demo](https://img.youtube.com/vi/HVagoIxUzM0/maxresdefault.jpg)](https://youtu.be/HVagoIxUzM0)
-
-A minimal DJ hand controller.
-
-## Downloadable binary (macOS)
-
-We publish standalone builds on GitHub Releases. To run:
-
-1. Go to the Releases page of this repo and download the artifact named `mini-dj-macos`.
-2. Unzip if necessary, then run it from Terminal:
-
-```bash
-chmod +x mini-dj
-./mini-dj
-```
-
-You may need to allow the app in macOS Gatekeeper (System Settings → Privacy & Security) since it is unsigned.
-
-If no MIDI outputs are found, install and enable a virtual MIDI driver (e.g. IAC Driver on macOS).
-
-## Development
-
-Run locally (from repo root):
-
-```bash
-python3 dj-hand-controller/src/main.py
-```
-
-> > > > > > > 14eedd7 (video demo from july)
