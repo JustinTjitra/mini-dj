@@ -1,0 +1,45 @@
+name: build-and-release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-13]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip pyinstaller
+          if [ -f dj-hand-controller/requirements.txt ]; then pip install -r dj-hand-controller/requirements.txt; fi
+      - name: Build binary (macOS)
+        run: |
+          cd dj-hand-controller
+          pyinstaller -F -n mini-dj src/main.py
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mini-dj-${{ runner.os }}
+          path: dj-hand-controller/dist/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/**/*
+
+

@@ -9,7 +9,7 @@ cd "$PROJECT_NAME"
 
 # 2. Git & venv
 git init
-python3 -m venv venv
+python -m venv venv
 
 # 3. .gitignore
 cat > .gitignore <<EOF
@@ -61,7 +61,7 @@ EOF
 # 8. Activate venv and install core deps
 source venv/bin/activate
 pip install --upgrade pip
-pip install mediapipe opencv-python numpy mido python-rtmidi python-osc
+pip install --default-timeout=300 mediapipe opencv-python numpy mido python-rtmidi python-osc
 pip freeze > requirements.txt
 
 echo "✔️  Bootstrapped $PROJECT_NAME"
