@@ -1,3 +1,5 @@
+<<<<<<< HEAD
+
 # DJ Hand Controller
 
 A gesture-to-MIDI/OSC DJ controller that uses a webcam to interpret hand movements and control DJ software. This project leverages Python with OpenCV for video processing and MediaPipe for hand tracking.
@@ -96,12 +98,11 @@ More features to come... (longer loops, filters, cues, pads, etc.)
 | **Index Finger Up**             | Toggle Play/Pause     | Rising edge of gesture                               |
 | **Index & Middle Fingers Up**   | Toggle 1-Beat Loop    | Rising edge of gesture                               |
 | **Middle, Ring, Pinky Up**      | Toggle 2-Beat Loop    | Rising edge of gesture                               |
-| **Ring & Pinky Up**             | Toggle 4-Beat Loop    | Rising edge of festure
+| **Ring & Pinky Up**             | Toggle 4-Beat Loop    | Rising edge of festure                               |
 | **Wrist in EQ Mode Button**     | **Select EQ Mode:**   |                                                      |
 | &nbsp;&nbsp;↳ Index Finger Up   | &nbsp;&nbsp;→ Low EQ  | Sets active EQ to Low                                |
 | &nbsp;&nbsp;↳ Index/Middle Up   | &nbsp;&nbsp;→ Mid EQ  | Sets active EQ to Mid                                |
 | &nbsp;&nbsp;↳ Mid/Ring/Pinky Up | &nbsp;&nbsp;→ High EQ | Sets active EQ to High                               |
-
 
 _Note: When an EQ mode (Low, Mid, or High) is selected, place your wrist in the "INC. EQ" or "DEQ. EQ" zones and adjust the value by changing the distance between your index and middle fingertips._
 
@@ -114,3 +115,39 @@ _Note: When an EQ mode (Low, Mid, or High) is selected, place your wrist in the 
 | **Middle, Ring, Pinky Up**    | Toggle Instrumentals Mute | Rising edge of gesture |
 
 ---
+
+=======
+
+# mini-dj
+
+## Demo Video
+
+[![Watch the demo](https://img.youtube.com/vi/HVagoIxUzM0/maxresdefault.jpg)](https://youtu.be/HVagoIxUzM0)
+
+A minimal DJ hand controller.
+
+## Downloadable binary (macOS)
+
+We publish standalone builds on GitHub Releases. To run:
+
+1. Go to the Releases page of this repo and download the artifact named `mini-dj-macos`.
+2. Unzip if necessary, then run it from Terminal:
+
+```bash
+chmod +x mini-dj
+./mini-dj
+```
+
+You may need to allow the app in macOS Gatekeeper (System Settings → Privacy & Security) since it is unsigned.
+
+If no MIDI outputs are found, install and enable a virtual MIDI driver (e.g. IAC Driver on macOS).
+
+## Development
+
+Run locally (from repo root):
+
+```bash
+python3 dj-hand-controller/src/main.py
+```
+
+> > > > > > > 14eedd7 (video demo from july)
